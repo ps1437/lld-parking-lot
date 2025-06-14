@@ -3,6 +3,9 @@ package com.syscho.lld.parkinglot;
 import lombok.Getter;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
 public class Parking {
@@ -10,11 +13,12 @@ public class Parking {
     public static final int BASE_PRICE = 20;
     private static final int PER_MINUTES_CAR = 4;
     private static final int PER_MINUTES_BIKE = 2;
+    private final AtomicInteger totalParkedVehicles = new AtomicInteger(0);
 
     private final String parkingId;
     private final List<ParkingSpot> parkingSpots;
-    private final Map<VehicleType, Queue<ParkingSpot>> freeSpotsByType = new HashMap<>();
-    private final Map<String, ParkingSpot> vehicleNumberToSpot = new HashMap<>();
+    private final Map<VehicleType, Queue<ParkingSpot>> freeSpotsByType = new ConcurrentHashMap<>();
+    private final Map<String, ParkingSpot> vehicleNumberToSpot = new ConcurrentHashMap<>();
 
 
     public Parking(String parkingId, List<ParkingSpot> parkingSpots) {
@@ -23,7 +27,7 @@ public class Parking {
         for (ParkingSpot spot : parkingSpots) {
             // Grouped by Type during creation
             freeSpotsByType
-                    .computeIfAbsent(spot.getAllowedVehicleType(), k -> new LinkedList<>())
+                    .computeIfAbsent(spot.getAllowedVehicleType(), k -> new ConcurrentLinkedQueue<>())
                     .add(spot);
         }
 
@@ -41,6 +45,7 @@ public class Parking {
         ParkingSpot spot = availableSpots.poll();
         if (spot.park(vehicle)) {
             vehicleNumberToSpot.put(vehicle.getVehicleNumber(), spot);
+            totalParkedVehicles.incrementAndGet();
             System.out.println(vehicle.getVehicleNumber() + " Parked at spot: " + spot.getParkSpotId());
             return true;
         }
@@ -63,6 +68,7 @@ public class Parking {
         // Add Spot back to free queue
         freeSpotsByType.get(spot.getAllowedVehicleType()).offer(spot);
 
+        totalParkedVehicles.decrementAndGet();
         System.out.println("Unparked " + unParkedVehicle.getVehicleNumber() + " | Duration: " + duration +
                 " min | Fee: ₹" + totalFare);
 
@@ -86,7 +92,7 @@ public class Parking {
                     parkedTime);
         }
 
-        long available = parkingSpots.stream().filter(ParkingSpot::isFree).count();
+        long available = parkingSpots.size() - totalParkedVehicles.get();
         System.out.println("--------------------------------------------------------------");
         System.out.printf("Total: %d | Free: %d | Occupied: %d%n", parkingSpots.size(), available, parkingSpots.size() - available);
     }
@@ -95,6 +101,5 @@ public class Parking {
         int perMinutesCharges = vehicleType == VehicleType.CAR ? PER_MINUTES_CAR : PER_MINUTES_BIKE;
         return (int) Math.max(BASE_PRICE, minutes * perMinutesCharges);
     }
-
 
 }

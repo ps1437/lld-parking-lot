@@ -1,30 +1,57 @@
 package com.syscho.lld.parkinglot;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
 public class ParkingMain {
+
     private static final Parking parkingArea = setupParkingFloorArea();
 
     public static void main(String[] args) throws InterruptedException {
+        ExecutorService executor = Executors.newFixedThreadPool(10);
 
         System.out.println("-----------------------------------------------");
-        System.out.println("Trying to park vehicles...");
-        for (int i = 0; i < 22; i++) {
-            VehicleType type = i % 2 == 0 ? VehicleType.CAR : VehicleType.BIKE;
-            Vehicle v = new Vehicle("TA-" + (2000 + i), type);
-            park(v);
+        System.out.println("Multithreaded Parking Started...");
+
+        List<Callable<Void>> parkTasks = new ArrayList<>();
+        for (int i = 0; i < 25; i++) {
+            int finalI = i;
+            parkTasks.add(() -> {
+                VehicleType type = finalI % 2 == 0 ? VehicleType.CAR : VehicleType.BIKE;
+                Vehicle v = new Vehicle("TA-" + (2000 + finalI), type);
+                park(v);
+                return null;
+            });
         }
 
+        //Run all the task concurrently
+        executor.invokeAll(parkTasks);
+
         parkingArea.printStatus();
+
         Thread.sleep(2000);
+
         System.out.println("-----------------------------------------------");
-        System.out.println("Unparking few vehicles...");
-        for (int i = 0; i < 5; i++) {
-            Vehicle v = new Vehicle("TA-" + (2000 + i), i % 2 == 0 ? VehicleType.CAR : VehicleType.BIKE);
-            unPark(v);
+        System.out.println("Multithreaded Unparking Started...");
+
+        List<Callable<Void>> unParkTasks = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            int finalI = i;
+            unParkTasks.add(() -> {
+                VehicleType type = finalI % 2 == 0 ? VehicleType.CAR : VehicleType.BIKE;
+                Vehicle v = new Vehicle("TA-" + (2000 + finalI), type);
+                unPark(v);
+                return null;
+            });
         }
 
+        //Run all the task concurrently
+        executor.invokeAll(unParkTasks);
+
         parkingArea.printStatus();
+        executor.shutdown();
     }
 
     private static void park(Vehicle vehicle) {
@@ -47,5 +74,4 @@ public class ParkingMain {
                 .toList();
         return new Parking("floor-1", spots);
     }
-
 }
