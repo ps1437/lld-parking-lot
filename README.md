@@ -84,7 +84,6 @@ Unparked TA-2000 | Duration: 2 min | Fee: ₹20
 ## 🧱 Future Enhancements
 
 - Multi-floor support
-- Reservation system
 - Dynamic pricing strategy
 - REST API (Spring Boot)
 - Real-time admin dashboard
