@@ -3,9 +3,9 @@ package com.syscho.lld.parkinglot;
 import java.util.stream.IntStream;
 
 public class ParkingMain {
-    private static Parking parkingArea = setupParkingFloorArea();
+    private static final Parking parkingArea = setupParkingFloorArea();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         System.out.println("-----------------------------------------------");
         System.out.println("Trying to park vehicles...");
@@ -16,6 +16,7 @@ public class ParkingMain {
         }
 
         parkingArea.printStatus();
+        Thread.sleep(2000);
         System.out.println("-----------------------------------------------");
         System.out.println("Unparking few vehicles...");
         for (int i = 0; i < 5; i++) {
