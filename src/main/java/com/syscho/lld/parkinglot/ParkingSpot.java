@@ -39,6 +39,10 @@ public class ParkingSpot {
         isFree = free;
     }
 
+    public long getParkedDurationMinutes() {
+        return parkedTime == null ? 0 : java.time.Duration.between(parkedTime, LocalDateTime.now()).toMinutes();
+    }
+
     @Override
     public String toString() {
         return "Spot[" + parkSpotId + "] - " + (isFree ? "Free" : vehicle.getVehicleNumber()) +
